@@ -612,15 +612,11 @@ play_deal_many_cards_anim :: proc(state: ^State, index: int) -> bool {
 }
 
 play_hit_animation :: proc(index: int) -> bool {
-    if index < 50 {
-        rl.DrawText("Took a hit!", 0, 0, 50, rl.RED);
-        return false;
-    }
     return true;
 }
 play_stand_animation :: proc(index: int) -> bool { return true; }
 play_receive_tokens_animation :: proc(index: int) -> bool {
-    if index < 400 {
+    if index < 300 {
         draw_text_box({"You won! See, ", "You CAN trust me!"}, {rl.BLACK, rl.RED}, no_input=true);
         return false;
     }
@@ -628,7 +624,7 @@ play_receive_tokens_animation :: proc(index: int) -> bool {
     return true;
 }
 play_relinquish_tokens_animation :: proc(state: ^State) -> bool {
-    if state.anim_index < 400 {
+    if state.anim_index < 300 {
         draw_text_box({"You lost, OOPS!", "Well, Nobody's perfect"}, {rl.BLACK, rl.BLACK}, no_input=true);
         return false;
     }
@@ -733,6 +729,8 @@ state_machine_logical :: proc(state: ^State) {
                         state.next_state = .Receive_Tokens;
                     } else if player_total < dealer_total {
                         state.next_state = .Relinquish_Tokens;
+                    } else if player_total == dealer_total {
+                        state.next_state = .Relinquish_Cards;
                     }
                 }
             }
@@ -765,20 +763,6 @@ state_machine_logical :: proc(state: ^State) {
             }
         }
         case .Stand_Off: {
-            // dealer_total := count_cards(state.dealer_hand[:]);
-            // player_total := count_cards(state.hand[:]);
-            // if !(player_total <= 21 && (dealer_total > 21 || player_total > dealer_total)) {
-            //     state.player_lost = true;
-            // }
-
-            // if state.finished_playing_animation {
-            //     if state.player_lost {
-            //         state.next_state = .Relinquish_Tokens;
-            //     } else {
-            //         state.next_state = .Dealer_Hit_Or_Stand;
-            //     }
-            // }
-
             if state.finished_playing_animation {
                 state.next_state = .Dealer_Hit_Or_Stand;
             }
@@ -850,6 +834,8 @@ state_machine_logical :: proc(state: ^State) {
                 for &token in state.tokens {
                     token.is_betting = false;
                 }
+
+                move_tokens(state.tokens[:]);
                 
                 state.next_state = .Wait_For_Bet;
             }
@@ -941,7 +927,8 @@ main :: proc() {
         rl.ClearBackground(rl.RAYWHITE);
         draw_table();
         state_machine_visual(&state);
-        draw_pointer();        
+        draw_pointer();
+        rl.DrawText("By Nathan Piel", 0, 0, 20, rl.BLACK);
         rl.EndDrawing();
     }
 
